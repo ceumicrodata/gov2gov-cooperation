@@ -1,0 +1,197 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   15.1   Copyright 1985-2017 StataCorp LLC
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+Single-user 2-core Stata perpetual license:
+       Serial number:  501506203290
+         Licensed to:  Miklos Koren
+                       CEU MicroData
+
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+. do events-over-time.do 
+
+. clear all
+
+. local files : dir "temp" files "bq-results*.dta"
+
+. 
+. tempfile all
+
+. save `all', replace emptyok
+(note: dataset contains 0 observations)
+(note: file /var/folders/w1/7d52g2y563517gpc7n0sv5_r0000gn/T//St08429.000001 no
+> t found)
+file /var/folders/w1/7d52g2y563517gpc7n0sv5_r0000gn/T//St08429.000001 saved
+
+. 
+. foreach file in `files' {
+  2.         use "temp/`file'", clear
+  3.         append using `all'
+  4.         save `all', replace
+  5. }
+file /var/folders/w1/7d52g2y563517gpc7n0sv5_r0000gn/T//St08429.000001 saved
+file /var/folders/w1/7d52g2y563517gpc7n0sv5_r0000gn/T//St08429.000001 saved
+
+. 
+. gen YearMonth = int(SQLDATE/100)
+
+. 
+. * drop events mentioned only once 
+. drop if NumMentions <= 1
+(31,485 observations deleted)
+
+. * drop historical events mentioned
+. drop if YearMonth < 201401
+(430 observations deleted)
+
+. collapse (sum) Mentions = NumMentions (count) Events = GLOBALEVENTID, by(Acto
+> r1CountryCode Actor2CountryCode EventRootCode YearMonth)
+
+. 
+. * balance panel over time
+. reshape wide Events Mentions, i(Actor1CountryCode Actor2CountryCode EventRoot
+> Code) j(YearMonth)
+(note: j = 201402 201403 201404 201405 201406 201407 201408 201409 201410 20141
+> 1 201412 201501 201502 201503 201504 201505 201506 201507 201508 201509 20151
+> 0 201511 201512 201601 201602 201603 201604 201605 201606 201607 201608 20160
+> 9 201610 201611 201612 201701 201702 201703 201704 201705 201706 201707 20170
+> 8 201709 201710 201711 201712 201801 201802 201803 201804 201805 201806 20180
+> 7 201808 201809 201810 201811 201812 201901 201902 201903 201904 201905 20190
+> 6 201907 201908 201909 201910 201911 201912 202001 202002 202003 202004)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                    68159   ->   10853
+Number of variables                   6   ->     153
+j variable (75 values)        YearMonth   ->   (dropped)
+xij variables:
+                                 Events   ->   Events201402 Events201403 ... Ev
+> ents202004
+                               Mentions   ->   Mentions201402 Mentions201403 ..
+> . Mentions202004
+-----------------------------------------------------------------------------
+
+. reshape long
+(note: j = 201402 201403 201404 201405 201406 201407 201408 201409 201410 20141
+> 1 201412 201501 201502 201503 201504 201505 201506 201507 201508 201509 20151
+> 0 201511 201512 201601 201602 201603 201604 201605 201606 201607 201608 20160
+> 9 201610 201611 201612 201701 201702 201703 201704 201705 201706 201707 20170
+> 8 201709 201710 201711 201712 201801 201802 201803 201804 201805 201806 20180
+> 7 201808 201809 201810 201811 201812 201901 201902 201903 201904 201905 20190
+> 6 201907 201908 201909 201910 201911 201912 202001 202002 202003 202004)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                    10853   ->  813975
+Number of variables                 153   ->       6
+j variable (75 values)                    ->   YearMonth
+xij variables:
+Events201402 Events201403 ... Events202004->   Events
+Mentions201402 Mentions201403 ... Mentions202004->Mentions
+-----------------------------------------------------------------------------
+
+. 
+. reshape wide Events Mentions, i(Actor1CountryCode Actor2CountryCode YearMonth
+> ) j(EventRootCode)
+(note: j = 3 4 5 6)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                   813975   ->  376200
+Number of variables                   6   ->      11
+j variable (4 values)     EventRootCode   ->   (dropped)
+xij variables:
+                                 Events   ->   Events3 Events4 ... Events6
+                               Mentions   ->   Mentions3 Mentions4 ... Mentions
+> 6
+-----------------------------------------------------------------------------
+
+. mvencode Events* Mentions*, mv(0)
+     Events3: 364325 missing values recoded
+     Events4: 337624 missing values recoded
+     Events5: 360367 missing values recoded
+     Events6: 374325 missing values recoded
+   Mentions3: 364325 missing values recoded
+   Mentions4: 337624 missing values recoded
+   Mentions5: 360367 missing values recoded
+   Mentions6: 374325 missing values recoded
+
+. 
+. generate date = date(string(YearMonth, "%6.0f"), "YM")
+
+. format date %td
+
+. 
+. label variable Events3 "Intent to cooperate"
+
+. label variable Events4 "Visits and negotiations"
+
+. label variable Events5 "Diplomatic events"
+
+. label variable Events6 "Material cooperation"
+
+. 
+. compress
+  variable Events3 was long now int
+  variable Events4 was long now int
+  variable Events5 was long now int
+  variable Events6 was long now byte
+  variable date was float now int
+  variable Mentions3 was double now int
+  variable Mentions4 was double now int
+  variable Mentions5 was double now int
+  variable Mentions6 was double now int
+  (13,167,000 bytes saved)
+
+. save "output/gov2gov-events-by-month.dta", replace
+file output/gov2gov-events-by-month.dta saved
+
+. 
+. * example graph
+. tw  (line Events3 Events4 Events5 date if Actor1CountryCode=="HUN" & Actor2Co
+> untryCode=="RUS", sort) ///
+>         , scheme(s2mono) ytitle("") xtitle("")
+
+.         
+. graph export "output/hun2rus-example.pdf", replace
+(file output/hun2rus-example.pdf written in PDF format)
+
+. 
+. * save to .csv
+. generate str YM = string(int(YearMonth/100)) + "-" + string(YearMonth - 100*i
+> nt(YearMonth/100), "%02.0f")
+
+. drop YearMonth
+
+. rename YM YearMonth
+
+. 
+. local  variables Actor1CountryCode Actor2CountryCode YearMonth Events3 Events
+> 4 Events5 Events6 Mentions3 Mentions4 Mentions5 Mentions6
+
+. keep  `variables'
+
+. order `variables'
+
+. 
+. sort Actor1 Actor2 YearMonth
+
+. export delimited "output/gov2gov-events-by-month.csv", replace
+(note: file output/gov2gov-events-by-month.csv not found)
+file output/gov2gov-events-by-month.csv saved
+
+. 
+end of do-file

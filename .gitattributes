@@ -1,2 +1,4 @@
 output/bq-results-20200414-171149-rcmlrwljonza.csv filter=lfs diff=lfs merge=lfs -text
 output/bq-results-20200416-124058-2r7gceihxn7c.csv filter=lfs diff=lfs merge=lfs -text
+externals/gdelt/bq-results-20200416-124058-2r7gceihxn7c.csv filter=lfs diff=lfs merge=lfs -text
+externals/gdelt/bq-results-20200416-171957-y1a7hshipebr.csv filter=lfs diff=lfs merge=lfs -text
