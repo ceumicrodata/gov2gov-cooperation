@@ -7,6 +7,7 @@ The main output table is `output/gov2gov-events-by-month.csv`
 
 ## Variables
 
+| Variable name     | Description                                   |
 |-------------------|-----------------------------------------------|
 | Actor1CountryCode | ISO-3166-1 3-letter code of initiator country |
 | Actor2CountryCode | ISO-3166-1 3-letter code of receiving country |
